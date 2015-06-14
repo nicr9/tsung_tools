@@ -2,6 +2,8 @@
 from flask import Flask, Response, json
 from sys import argv
 from os.path import join as path_join
+from os.path import isfile
+from os import walk as path_walk
 from collections import defaultdict
 
 root_path = argv[1]
@@ -45,6 +47,19 @@ def update_data(path):
                 where[path] = inp.tell()
             else:
                 break
+
+def is_tsung_results(path):
+    return isfile(path_join(path, 'tsung.log'))
+
+@app.route('/')
+def index():
+    dirs = next(path_walk('.'))[1]
+    tsung_dirs = [path for path in dirs if is_tsung_results(path)]
+    return Response(
+            json.dumps(tsung_dirs),
+            status=200,
+            mimetype='application/json'
+            )
 
 @app.route('/<path:path>/all')
 def all_data(path):
