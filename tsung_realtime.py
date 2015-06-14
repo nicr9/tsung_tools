@@ -12,7 +12,7 @@ log_path = path_join(root_path, 'tsung.log')
 app = Flask(__name__, static_url_path='')
 where = defaultdict(int)
 timestamp = 0
-data = defaultdict(dict)
+data = defaultdict(lambda: defaultdict(dict))
 
 def process(data, line):
     global timestamp
@@ -43,7 +43,7 @@ def update_data(path):
         while True:
             line = inp.readline()
             if line:
-                process(data, line)
+                process(data[path], line)
                 where[path] = inp.tell()
             else:
                 break
@@ -52,7 +52,7 @@ def is_tsung_results(path):
     return isfile(path_join(path, 'tsung.log'))
 
 def links(details):
-    elems = ['<li><a href=%s/all>%s</a></li>' % (href, path)
+    elems = ['<li><a href=%s>%s</a></li>' % (href, path)
             for href, path in details.iteritems()]
     joined = '\n'.join(elems)
     return '<ul>%s</ul>' % joined
@@ -67,10 +67,24 @@ def index():
             mimetype='text/html'
             )
 
-@app.route('/<path:path>/all')
-def all_data(path):
+@app.route('/<path>/')
+def selection(path):
     update_data(path)
-    return Response(json.dumps(data), status=200, mimetype='application/json')
+    hrefs = {key: key for key in data[path]}
+    return Response(
+            links(hrefs),
+            status=200,
+            mimetype='text/html'
+            )
+
+@app.route('/<path:path>/<graph>')
+def results(path, graph):
+    update_data(path)
+    if graph == 'all':
+        return Response(json.dumps(data), status=200, mimetype='application/json')
+    else:
+        results = data[path][graph]
+        return Response(json.dumps(results), status=200, mimetype='application/json')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, debug=True)
