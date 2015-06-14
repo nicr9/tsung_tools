@@ -51,14 +51,18 @@ def update_data(path):
 def is_tsung_results(path):
     return isfile(path_join(path, 'tsung.log'))
 
+def links(details):
+    elems = ['<li><a href=%s/all>%s</a></li>' % (href, path)
+            for href, path in details.iteritems()]
+    joined = '\n'.join(elems)
+    return '<ul>%s</ul>' % joined
+
 @app.route('/')
 def index():
     dirs = next(path_walk('.'))[1]
-    tsung_dirs = [path for path in dirs if is_tsung_results(path)]
-    links = '\n'.join(['<li><a href=%s/all>%s</a></li>' % (path, path)])
-    html = '<ul>%s</ul>' % links
+    tsung_hrefs = {path:path for path in dirs if is_tsung_results(path)}
     return Response(
-            html,
+            links(tsung_hrefs),
             status=200,
             mimetype='text/html'
             )
