@@ -55,10 +55,12 @@ def is_tsung_results(path):
 def index():
     dirs = next(path_walk('.'))[1]
     tsung_dirs = [path for path in dirs if is_tsung_results(path)]
+    links = '\n'.join(['<li><a href=%s/all>%s</a></li>' % (path, path)])
+    html = '<ul>%s</ul>' % links
     return Response(
-            json.dumps(tsung_dirs),
+            html,
             status=200,
-            mimetype='application/json'
+            mimetype='text/html'
             )
 
 @app.route('/<path:path>/all')
