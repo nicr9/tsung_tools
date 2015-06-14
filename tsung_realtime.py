@@ -8,7 +8,7 @@ root_path = argv[1]
 log_path = path_join(root_path, 'tsung.log')
 
 app = Flask(__name__, static_url_path='')
-where = 0
+where = defaultdict(int)
 timestamp = 0
 data = defaultdict(dict)
 
@@ -33,21 +33,22 @@ def process(data, line):
             else:
                 print line, '|', results
 
-def update_data():
+def update_data(path):
     global where, data
-    with open(log_path, 'r') as inp:
-        inp.seek(where)
+    full_path = path_join(path, log_path)
+    with open(full_path, 'r') as inp:
+        inp.seek(where[path])
         while True:
             line = inp.readline()
             if line:
                 process(data, line)
-                where = inp.tell()
+                where[path] = inp.tell()
             else:
                 break
 
-@app.route('/all')
-def all_data():
-    update_data()
+@app.route('/<path:path>/all')
+def all_data(path):
+    update_data(path)
     return Response(json.dumps(data), status=200, mimetype='application/json')
 
 if __name__ == "__main__":
